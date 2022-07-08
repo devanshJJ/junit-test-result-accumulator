@@ -14,23 +14,17 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.UUID;
-
+import io.timeline.junitTest.result.JunitTestResultObject;
 
 @RunListener.ThreadSafe
 public class TheJunit4Listener extends RunListener {
 
-    String testName;
-    String test_ClassName;
-    String test_status;
-    String test_ThreadName;
-    long test_startTime;
-    long test_endTime;
+
     String PATH_OF_FOLDER = "build/test-results/individual-test-results";
-    String testOwner="";
-    String test_errorDescription="";
 
-
+    HashMap<String,JunitTestResultObject> storeTestsResult=new HashMap<>();
 
 
 
@@ -45,32 +39,37 @@ public class TheJunit4Listener extends RunListener {
     @Override
     public void testStarted(final Description description) {
 
-        test_startTime =System.currentTimeMillis();
-        test_ThreadName =ManagementFactory.getRuntimeMXBean().getName()+"."+Thread.currentThread().getName()+"("+Thread.currentThread().getId()+")";
-        testName =description.getMethodName();
-        test_ClassName =description.getClassName();
-        test_status ="SUCCESS";
-        testOwner="";
-        test_errorDescription="";
+        JunitTestResultObject currTest =new JunitTestResultObject();
+        currTest.test_startTime =System.currentTimeMillis();
+        currTest.test_ThreadName =ManagementFactory.getRuntimeMXBean().getName()+"."+Thread.currentThread().getName()+"("+Thread.currentThread().getId()+")";
+        currTest.testName =description.getMethodName();
+        currTest.test_ClassName =description.getClassName();
+        currTest.test_status ="SUCCESS";
+        currTest.testOwner="";
+        currTest.test_errorDescription="";
         if(description.getAnnotation(TestOwner.class)!=null){
-            testOwner=description.getAnnotation(TestOwner.class).value();
+            currTest.testOwner=description.getAnnotation(TestOwner.class).value();
         }
+
+        storeTestsResult.put(currTest.test_ThreadName,currTest);
 
 
     }
 
     @Override
     public void testFinished(final Description description) {
-        test_endTime =System.currentTimeMillis();
+        String mapKey=ManagementFactory.getRuntimeMXBean().getName()+"."+Thread.currentThread().getName()+"("+Thread.currentThread().getId()+")";
+        JunitTestResultObject currTest=storeTestsResult.get(mapKey);
+        currTest.test_endTime =System.currentTimeMillis();
 
-        String json="{\"name\":\""+ testName +"\" ," +
-                    " \"className\":\""+ test_ClassName +"\" ," +
-                     " \"testOwner\":\""+ testOwner +"\" ," +
-                    " \"result\":\""+ test_status +"\" ," +
-                    " \"StartTime\":"+ test_startTime +" ,"+
-                    " \"EndTime\":"+ test_endTime +" ,"+
-                    " \"ErrorDescription\": \""+ test_errorDescription +"\","+
-                    "\"Thread\":\" "+ test_ThreadName +" \" }";
+        String json="{\"name\":\""+ currTest.testName +"\" ," +
+                    " \"className\":\""+ currTest.test_ClassName +"\" ," +
+                     " \"testOwner\":\""+ currTest.testOwner +"\" ," +
+                    " \"result\":\""+ currTest.test_status +"\" ," +
+                    " \"StartTime\":"+ currTest.test_startTime +" ,"+
+                    " \"EndTime\":"+ currTest.test_endTime +" ,"+
+                    " \"ErrorDescription\": \""+ currTest.test_errorDescription +"\","+
+                    "\"Thread\":\" "+ currTest.test_ThreadName +" \" }";
 
         File myReportDir = new File(PATH_OF_FOLDER);
         if (! Files. exists(Paths. get(PATH_OF_FOLDER))) {
@@ -78,7 +77,7 @@ public class TheJunit4Listener extends RunListener {
         }
 
         UUID uuid = UUID.randomUUID();
-        String jsonFile_pathName ="build/test-results/individual-test-results/"+ testName +"-"+uuid.toString()+"-result.json";
+        String jsonFile_pathName ="build/test-results/individual-test-results/"+ currTest.testName +"-"+uuid.toString()+"-result.json";
 
         File testResult_file = new File(jsonFile_pathName);
         try {
@@ -100,41 +99,47 @@ public class TheJunit4Listener extends RunListener {
     }
     @Override
     public void testFailure(final Failure failure) {
-        test_status ="FAILURE";
+        String mapKey=ManagementFactory.getRuntimeMXBean().getName()+"."+Thread.currentThread().getName()+"("+Thread.currentThread().getId()+")";
+        JunitTestResultObject currTest=storeTestsResult.get(mapKey);
+        currTest.test_status ="FAILURE";
 
-        test_errorDescription=failure.getMessage();
+        currTest.test_errorDescription=failure.getMessage();
 
     }
 
     @Override
     public void testAssumptionFailure(final Failure failure) {
+        String mapKey=ManagementFactory.getRuntimeMXBean().getName()+"."+Thread.currentThread().getName()+"("+Thread.currentThread().getId()+")";
+        JunitTestResultObject currTest=storeTestsResult.get(mapKey);
 
-        test_status ="SKIPPED";
-        test_errorDescription=failure.getMessage();
+        currTest.test_status ="SKIPPED";
+        currTest.test_errorDescription=failure.getMessage();
 
     }
 
     @Override
     public void testIgnored(final Description description) {
-        test_startTime =System.currentTimeMillis();
-        test_ThreadName =ManagementFactory.getRuntimeMXBean().getName()+"."+Thread.currentThread().getName()+"("+Thread.currentThread().getId()+")";
-        testName =description.getMethodName();
-        test_ClassName =description.getClassName();
+        JunitTestResultObject currTest=new JunitTestResultObject();
+
+        currTest.test_startTime =System.currentTimeMillis();
+        currTest.test_ThreadName =ManagementFactory.getRuntimeMXBean().getName()+"."+Thread.currentThread().getName()+"("+Thread.currentThread().getId()+")";
+        currTest.testName =description.getMethodName();
+        currTest.test_ClassName =description.getClassName();
         if(description.getAnnotation(TestOwner.class)!=null){
-            testOwner=description.getAnnotation(TestOwner.class).value();
+            currTest.testOwner=description.getAnnotation(TestOwner.class).value();
         }
-        test_status ="SKIPPED";
-        test_endTime =System.currentTimeMillis();
+        currTest.test_status ="SKIPPED";
+        currTest.test_endTime =System.currentTimeMillis();
 
 
 
-        String json="{\"name\":\""+ testName +"\" ," +
-                " \"className\":\""+ test_ClassName +"\" ," +
-                " \"testOwner\":\""+ testOwner +"\" ," +
-                " \"result\":\""+ test_status +"\" ," +
-                " \"StartTime\":"+ test_startTime +" ,"+
-                " \"EndTime\":"+ test_endTime +" ,"+
-                "\"Thread\":\" "+ test_ThreadName +" \" }";
+        String json="{\"name\":\""+ currTest.testName +"\" ," +
+                " \"className\":\""+ currTest.test_ClassName +"\" ," +
+                " \"testOwner\":\""+ currTest.testOwner +"\" ," +
+                " \"result\":\""+ currTest.test_status +"\" ," +
+                " \"StartTime\":"+ currTest.test_startTime +" ,"+
+                " \"EndTime\":"+ currTest.test_endTime +" ,"+
+                "\"Thread\":\" "+ currTest.test_ThreadName +" \" }";
 
         File myReportDir = new File(PATH_OF_FOLDER);
         if (! Files. exists(Paths. get(PATH_OF_FOLDER))) {
@@ -142,7 +147,7 @@ public class TheJunit4Listener extends RunListener {
         }
 
         UUID uuid = UUID.randomUUID();
-        String jsonFile_pathName ="build/test-results/individual-test-results/"+ testName +"-"+uuid.toString()+"-result.json";
+        String jsonFile_pathName ="build/test-results/individual-test-results/"+ currTest.testName +"-"+uuid.toString()+"-result.json";
 
         File testResult_file = new File(jsonFile_pathName);
         try {
