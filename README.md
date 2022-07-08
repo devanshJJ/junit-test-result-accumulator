@@ -9,3 +9,6 @@ Then this is used by the plugin which provide task to create HTML report which s
 <img width="1680" alt="Screenshot 2022-07-08 at 10 55 06 AM" src="https://user-images.githubusercontent.com/107236994/177925955-b090cb8b-bb51-42cc-906c-04a9ccb5bb64.png">
 <img width="1669" alt="Screenshot 2022-07-08 at 10 59 06 AM" src="https://user-images.githubusercontent.com/107236994/177925963-63085d3f-d462-4563-8a0a-368de3e488f1.png">
 <img width="1662" alt="Screenshot 2022-07-08 at 10 59 24 AM" src="https://user-images.githubusercontent.com/107236994/177925966-5fb6724d-b509-4dcd-b637-fa3dafed2e01.png">
+
+To use the project publish the jar of junit-test-result-accumulator project to your repo(ex-mavenLocal or nexus)
+and then add plugin files to project and apply plugin. For using plugin you can take the groovy file and add it in your project or may publish the plugin. 
